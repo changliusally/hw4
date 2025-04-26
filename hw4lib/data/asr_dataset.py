@@ -105,7 +105,7 @@ class ASRDataset(Dataset):
         # Why will test-clean need to be handled differently?
         if self.partition != "test-clean":
             # TODO: Use root and partition to get the text directory
-            self.text_dir   = os.path.join(config['root', partition, 'fbank'])
+            self.text_dir   = os.path.join(config['root'], partition, 'fbank')
 
             # TODO: Get all text files in the text directory in sorted order  
             self.text_files = sorted([os.path.join(self.text_dir, file) for file in os.listdir(self.text_dir) if file.endswith('.npy')])
