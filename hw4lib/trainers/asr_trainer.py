@@ -62,7 +62,10 @@ class ASRTrainer(BaseTrainer):
         # TODO: Initialize CE loss
         # How would you set the ignore_index? 
         # Use value in config to set the label_smoothing argument
-        self.ce_criterion = NotImplementedError
+        self.ce_criterion = nn.CrossEntropyLoss(
+            ignore_index=self.tokenizer.pad_id,
+            label_smoothing=self.config['loss'].get('label_smoothing', 0.0)
+        )
         
         # TODO: Initialize CTC loss if needed
         # You can use the pad token id as the blank index
@@ -205,7 +208,6 @@ class ASRTrainer(BaseTrainer):
             Tuple[Dict[str, float], List[Dict[str, Any]]]: Validation metrics and recognition results
         """
         # TODO: In-fill the _validate_epoch method
-        # raise NotImplementedError # Remove once implemented
         self.model.eval()
         # TODO: Call recognize
         results = self.recognize(dataloader)
@@ -235,7 +237,6 @@ class ASRTrainer(BaseTrainer):
             raise ValueError("Optimizer is not initialized, initialize it first!")
         
         # TODO: In-fill the train method
-        # raise NotImplementedError # Remove once implemented
 
         # Set max transcript length
         self.text_max_len = max(val_dataloader.dataset.text_max_len, train_dataloader.dataset.text_max_len)
@@ -357,8 +358,7 @@ class ASRTrainer(BaseTrainer):
         if max_length is None and not hasattr(self, 'text_max_len'):
             raise ValueError("text_max_len is not set. Please run training loop first or provide a max_length")
         
-        # TODO: In-fill the recognize method
-        # raise NotImplementedError # Remove once implemented
+        # TODO: In-fill the recognize method]
 
         if recognition_config is None:
             # Default config (greedy search)
@@ -394,7 +394,7 @@ class ASRTrainer(BaseTrainer):
             for i, batch in enumerate(dataloader):
                 # TODO: Unpack batch and move to device
                 # TODO: Handle both cases where targets may or may not be None (val set v. test set) 
-                feats, _, targets_golden, feat_lengths, _ = batch
+                feats, _, targets_golden, feat_lengths, _ = [x.to(self.device) if x is not None else None for x in batch]
                 
                 # TODO: Encode speech features to hidden states
                 encoder_output, pad_mask_src, _, _ = self.model.encode(feats, feat_lengths)
@@ -419,6 +419,7 @@ class ASRTrainer(BaseTrainer):
                     # TODO: If you have implemented beam search, generate sequences using beam search
                     seqs, scores = generator.generate_beam(
                         prompts,
+                        beam_width=recognition_config['beam_width'],
                         temperature=recognition_config['temperature'],
                         repeat_penalty=recognition_config['repeat_penalty']
                     )
