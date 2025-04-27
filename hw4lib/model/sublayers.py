@@ -142,8 +142,8 @@ class CrossAttentionLayer(nn.Module):
         # Set need_weights to True and average_attn_weights to True so we can get the attention weights 
         output_x, mha_attn_weights = self.mha(
             query = self.norm(x),
-            key = self.norm(x),
-            value = self.norm(x),
+            key = y,
+            value = y,
             key_padding_mask = key_padding_mask,
             attn_mask = attn_mask,
             need_weights = True,
