@@ -105,11 +105,10 @@ class ASRTrainer(BaseTrainer):
 
         for i, batch in enumerate(dataloader):
             # TODO: Unpack batch and move to device
-            feats, targets_shifted, targets_golden, feat_lengths, transcript_lengths = batch
+            feats, targets_shifted, targets_golden, feat_lengths, transcript_lengths = [x.to(self.device) for x in batch]
 
             with torch.autocast(device_type=self.device, dtype=torch.float16):
                 # TODO: get raw predictions and attention weights and ctc inputs from model
-                feats = feats.to(torch.float16)
                 seq_out, curr_att, ctc_inputs = self.model(feats, targets_shifted, feat_lengths, transcript_lengths)
                 
                 # Update running_att with the latest attention weights
@@ -396,7 +395,7 @@ class ASRTrainer(BaseTrainer):
                 # TODO: Unpack batch and move to device
                 # TODO: Handle both cases where targets may or may not be None (val set v. test set) 
                 feats, _, targets_golden, feat_lengths, _ = [x.to(self.device) if x is not None else None for x in batch]
-                feats = feats.to(torch.float16)
+
                 # TODO: Encode speech features to hidden states
                 encoder_output, pad_mask_src, _, _ = self.model.encode(feats, feat_lengths)
                 
