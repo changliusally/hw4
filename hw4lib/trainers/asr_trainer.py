@@ -76,8 +76,6 @@ class ASRTrainer(BaseTrainer):
                 blank=self.tokenizer.pad_id,
                 zero_infinity=True
             )
-        
-
 
     def _train_epoch(self, dataloader):
         """
@@ -89,7 +87,6 @@ class ASRTrainer(BaseTrainer):
             Tuple[Dict[str, float], Dict[str, torch.Tensor]]: Training metrics and attention weights
         """
         # TODO: In-fill the _train_epoch method
-        # raise NotImplementedError # Remove once implemented
     
         # Initialize training variables
         self.model.train()
@@ -105,15 +102,11 @@ class ASRTrainer(BaseTrainer):
 
         for i, batch in enumerate(dataloader):
             # TODO: Unpack batch and move to device
-            feats, targets_shifted, targets_golden, feat_lengths, transcript_lengths = batch
-            feats = feats.to(self.device)
-            targets_shifted = targets_shifted.to(self.device)
-            targets_golden = targets_golden.to(self.device)
-            feat_lengths = feat_lengths.to(self.device)
-            transcript_lengths = transcript_lengths.to(self.device)
+            feats, targets_shifted, targets_golden, feat_lengths, transcript_lengths = [x.to(self.device) for x in batch]
 
             with torch.autocast(device_type=self.device, dtype=torch.float16):
                 # TODO: get raw predictions and attention weights and ctc inputs from model
+                # feats = feats.to(torch.float16)
                 seq_out, curr_att, ctc_inputs = self.model(feats, targets_shifted, feat_lengths, transcript_lengths)
                 
                 # Update running_att with the latest attention weights
@@ -125,13 +118,11 @@ class ASRTrainer(BaseTrainer):
                 
                 # TODO: Calculate CTC loss if needed
                 if self.ctc_weight > 0:
+                    log_probs = ctc_inputs['log_probs']
+                    input_lengths = ctc_inputs['lengths']
+                    target_lengths = transcript_lengths
                     targets = targets_golden[targets_golden != self.tokenizer.pad_id]
-                    ctc_loss = self.ctc_criterion(
-                        ctc_inputs['log_probs'],
-                        targets,
-                        ctc_inputs['lengths'],
-                        transcript_lengths
-                    )
+                    ctc_loss = self.ctc_criterion(log_probs, targets, input_lengths, target_lengths)
                     loss = ce_loss + self.ctc_weight * ctc_loss
                 else:
                     ctc_loss = torch.tensor(0.0)
@@ -214,6 +205,7 @@ class ASRTrainer(BaseTrainer):
         """
         # TODO: In-fill the _validate_epoch method
         self.model.eval()
+
         # TODO: Call recognize
         results = self.recognize(dataloader)
         
@@ -363,7 +355,7 @@ class ASRTrainer(BaseTrainer):
         if max_length is None and not hasattr(self, 'text_max_len'):
             raise ValueError("text_max_len is not set. Please run training loop first or provide a max_length")
         
-        # TODO: In-fill the recognize method]
+        # TODO: In-fill the recognize method
 
         if recognition_config is None:
             # Default config (greedy search)
@@ -400,7 +392,8 @@ class ASRTrainer(BaseTrainer):
                 # TODO: Unpack batch and move to device
                 # TODO: Handle both cases where targets may or may not be None (val set v. test set) 
                 feats, _, targets_golden, feat_lengths, _ = [x.to(self.device) if x is not None else None for x in batch]
-
+                # feats = feats.to(torch.float16)
+                
                 # TODO: Encode speech features to hidden states
                 encoder_output, pad_mask_src, _, _ = self.model.encode(feats, feat_lengths)
                 
@@ -428,7 +421,7 @@ class ASRTrainer(BaseTrainer):
                         temperature=recognition_config['temperature'],
                         repeat_penalty=recognition_config['repeat_penalty']
                     )
-                    # raise NotImplementedError # Remove if you implemented the beam search method
+                    raise NotImplementedError # Remove if you implemented the beam search method
                     # Pick best beam
                     seqs = seqs[:, 0, :]
                     scores = scores[:, 0]
@@ -439,7 +432,6 @@ class ASRTrainer(BaseTrainer):
                         temperature=recognition_config['temperature'],
                         repeat_penalty=recognition_config['repeat_penalty']
                     )
-                    # raise NotImplementedError # Remove if you implemented the greedy search method
 
                 # Clean up
                 del feats, feat_lengths, encoder_output, pad_mask_src, prompts
