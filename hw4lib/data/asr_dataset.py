@@ -91,7 +91,7 @@ class ASRDataset(Dataset):
         self.fbank_dir   = os.path.join(config['root'], partition, 'fbank')
         
         # TODO: Get all feature files in the feature directory in sorted order  
-        self.fbank_files = sorted([f for f in os.listdir(self.fbank_dir) if f.endswith(".npy")])
+        self.fbank_files = sorted([file for file in os.listdir(self.fbank_dir) if file.endswith(".npy")])
         
         
         # TODO: Take subset
@@ -108,7 +108,7 @@ class ASRDataset(Dataset):
             self.text_dir   = os.path.join(config["root"], partition, "text")
 
             # TODO: Get all text files in the text directory in sorted order  
-            self.text_files = sorted([f for f in os.listdir(self.text_dir) if f.endswith(".npy")])
+            self.text_files = sorted([file for file in os.listdir(self.text_dir) if file.endswith(".npy")])
 
             
             # TODO: Take subset
@@ -197,7 +197,7 @@ class ASRDataset(Dataset):
         # DO NOT MODIFY 
         self.avg_chars_per_token = self.total_chars / self.total_tokens if self.total_tokens > 0 else 0
         
-        print(f"length of feats {len(self.feats)}, shifted {len(self.transcripts_shifted)}, golden {len(self.transcripts_golden)}")
+        # print(f"length of feats {len(self.feats)}, shifted {len(self.transcripts_shifted)}, golden {len(self.transcripts_golden)}")
 
         if self.partition != "test-clean":
             # Verify data alignment
