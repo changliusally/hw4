@@ -87,6 +87,7 @@ class ASRTrainer(BaseTrainer):
             Tuple[Dict[str, float], Dict[str, torch.Tensor]]: Training metrics and attention weights
         """
         # TODO: In-fill the _train_epoch method
+        # raise NotImplementedError # Remove once implemented
     
         # Initialize training variables
         self.model.train()
@@ -106,7 +107,6 @@ class ASRTrainer(BaseTrainer):
 
             with torch.autocast(device_type=self.device, dtype=torch.float16):
                 # TODO: get raw predictions and attention weights and ctc inputs from model
-                # feats = feats.to(torch.float16)
                 seq_out, curr_att, ctc_inputs = self.model(feats, targets_shifted, feat_lengths, transcript_lengths)
                 
                 # Update running_att with the latest attention weights
@@ -118,11 +118,13 @@ class ASRTrainer(BaseTrainer):
                 
                 # TODO: Calculate CTC loss if needed
                 if self.ctc_weight > 0:
-                    log_probs = ctc_inputs['log_probs']
-                    input_lengths = ctc_inputs['lengths']
-                    target_lengths = transcript_lengths
                     targets = targets_golden[targets_golden != self.tokenizer.pad_id]
-                    ctc_loss = self.ctc_criterion(log_probs, targets, input_lengths, target_lengths)
+                    ctc_loss = self.ctc_criterion(
+                        ctc_inputs['log_probs'],
+                        targets,
+                        ctc_inputs['lengths'],
+                        transcript_lengths
+                    )
                     loss = ce_loss + self.ctc_weight * ctc_loss
                 else:
                     ctc_loss = torch.tensor(0.0)
@@ -421,7 +423,6 @@ class ASRTrainer(BaseTrainer):
                         temperature=recognition_config['temperature'],
                         repeat_penalty=recognition_config['repeat_penalty']
                     )
-                    raise NotImplementedError # Remove if you implemented the beam search method
                     # Pick best beam
                     seqs = seqs[:, 0, :]
                     scores = scores[:, 0]
