@@ -357,7 +357,7 @@ class ASRTrainer(BaseTrainer):
         if max_length is None and not hasattr(self, 'text_max_len'):
             raise ValueError("text_max_len is not set. Please run training loop first or provide a max_length")
         
-        # TODO: In-fill the recognize method
+        # TODO: In-fill the recognize method]
 
         if recognition_config is None:
             # Default config (greedy search)
@@ -394,8 +394,7 @@ class ASRTrainer(BaseTrainer):
                 # TODO: Unpack batch and move to device
                 # TODO: Handle both cases where targets may or may not be None (val set v. test set) 
                 feats, _, targets_golden, feat_lengths, _ = [x.to(self.device) if x is not None else None for x in batch]
-                # feats = feats.to(torch.float16)
-                
+
                 # TODO: Encode speech features to hidden states
                 encoder_output, pad_mask_src, _, _ = self.model.encode(feats, feat_lengths)
                 
@@ -423,6 +422,7 @@ class ASRTrainer(BaseTrainer):
                         temperature=recognition_config['temperature'],
                         repeat_penalty=recognition_config['repeat_penalty']
                     )
+                    # raise NotImplementedError # Remove if you implemented the beam search method
                     # Pick best beam
                     seqs = seqs[:, 0, :]
                     scores = scores[:, 0]
@@ -433,6 +433,7 @@ class ASRTrainer(BaseTrainer):
                         temperature=recognition_config['temperature'],
                         repeat_penalty=recognition_config['repeat_penalty']
                     )
+                    # raise NotImplementedError # Remove if you implemented the greedy search method
 
                 # Clean up
                 del feats, feat_lengths, encoder_output, pad_mask_src, prompts
