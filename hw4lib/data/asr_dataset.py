@@ -91,8 +91,8 @@ class ASRDataset(Dataset):
         self.fbank_dir   = os.path.join(config['root'], partition, 'fbank')
         
         # TODO: Get all feature files in the feature directory in sorted order  
-        self.fbank_files = sorted([os.path.join(self.fbank_dir, file) for file in os.listdir(self.fbank_dir) if file.endswith('.npy')])
-
+        self.fbank_files = sorted([f for f in os.listdir(self.fbank_dir) if f.endswith(".npy")])
+        
         
         # TODO: Take subset
         subset_size      = int(len(self.fbank_files)*config.get('subset', 1.0)) # incase the config doesnt have the parameter 'subset' it won't report error but directly use 1.0 instead.
@@ -105,10 +105,10 @@ class ASRDataset(Dataset):
         # Why will test-clean need to be handled differently?
         if self.partition != "test-clean":
             # TODO: Use root and partition to get the text directory
-            self.text_dir   = os.path.join(config['root'], partition, 'text')
+            self.text_dir   = os.path.join(config["root"], partition, "text")
 
             # TODO: Get all text files in the text directory in sorted order  
-            self.text_files = sorted([os.path.join(self.text_dir, file) for file in os.listdir(self.text_dir) if file.endswith('.npy')])
+            self.text_files = sorted([f for f in os.listdir(self.text_dir) if f.endswith(".npy")])
 
             
             # TODO: Take subset
@@ -144,7 +144,8 @@ class ASRDataset(Dataset):
         for i in tqdm(range(self.length)):
             # TODO: Load features
             # Features are of shape (num_feats, time)
-            feat = np.load(self.fbank_files[i])
+            feat = np.load(os.path.join(self.fbank_dir, self.fbank_files[i]))
+
 
             # TODO: Truncate features to num_feats set by you in the config
             feat = feat[:self.config['num_feats'], :]
@@ -172,8 +173,8 @@ class ASRDataset(Dataset):
             if self.partition != "test-clean":
                 # TODO: Load the transcript
                 # Note: Use np.load to load the numpy array and convert to list and then join to string 
-                transcript = "".join(np.load(self.text_files[i]).tolist())
-                
+                transcript = "".join(np.load(os.path.join(self.text_dir, self.text_files[i])).tolist())
+
                 # TODO: Track character count (before tokenization)
                 self.total_chars += len(transcript)
 
@@ -196,9 +197,10 @@ class ASRDataset(Dataset):
         # DO NOT MODIFY 
         self.avg_chars_per_token = self.total_chars / self.total_tokens if self.total_tokens > 0 else 0
         
+        print(f"length of feats {len(self.feats)}, shifted {len(self.transcripts_shifted)}, golden {len(self.transcripts_golden)}")
+
         if self.partition != "test-clean":
             # Verify data alignment
-            print(f"length of feats {len(self.feats)}, shifted {self.transcripts_shifted}, golden {self.transcripts_golden}")
             if not (len(self.feats) == len(self.transcripts_shifted) == len(self.transcripts_golden)):
                 raise ValueError("Features and transcripts are misaligned")
 
