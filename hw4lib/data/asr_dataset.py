@@ -172,7 +172,6 @@ class ASRDataset(Dataset):
             if self.partition != "test-clean":
                 # TODO: Load the transcript
                 # Note: Use np.load to load the numpy array and convert to list and then join to string 
-                print(self.text_files[i])
                 transcript = "".join(np.load(self.text_files[i]).tolist())
                 
                 # TODO: Track character count (before tokenization)
@@ -199,6 +198,7 @@ class ASRDataset(Dataset):
         
         if self.partition != "test-clean":
             # Verify data alignment
+            print(f"length of feats {len(self.feats)}, shifted {self.transcripts_shifted}, golden {self.transcripts_golden}")
             if not (len(self.feats) == len(self.transcripts_shifted) == len(self.transcripts_golden)):
                 raise ValueError("Features and transcripts are misaligned")
 
@@ -252,6 +252,8 @@ class ASRDataset(Dataset):
         """
         # TODO: Load features
         feat = self.feats[idx]
+        if isinstance(feat, np.ndarray):
+            feat = torch.FloatTensor(feat)
 
         # TODO: Apply normalization
         if self.config['norm'] == 'global_mvn':
@@ -295,7 +297,7 @@ class ASRDataset(Dataset):
 
         # TODO: Collect feature lengths from the batch into a tensor
         # Note: Use list comprehension to collect the feature lengths from the batch   
-        feat_lengths = torch.LongTensor([b[0].shape[1] for b in batch]) # B
+        feat_lengths = torch.LongTensor([data[0].shape[1] for data in batch]) # B
 
         # TODO: Pad features to create a batch of fixed-length padded features
         # Note: Use torch.nn.utils.rnn.pad_sequence to pad the features (use pad_token as the padding value)
